@@ -71,4 +71,26 @@ module.exports.NewUser = async (name, email, password) => {
         console.log(err);
     }
 }
+module.exports.getPassword = async (email, password) => {
+    try {
+        const hashPass = await new Promise((resolve, reject) => {
+
+            connection.query(`select password from users where email = "${email}"`, (err, data) => {
+                if (err) {
+                    console.log(err.message);
+                    reject(err.message);
+                }
+                else {
+                    // console.log(data[0].password);
+                    resolve(data[0].password);
+                }
+            })
+        });
+        const Check = await bcrypt.checkPassword(password, hashPass);
+        return Check;
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
 

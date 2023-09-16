@@ -2,10 +2,22 @@ const dbcmd = require('../db/dbcmd');
 module.exports.login_get = (req, res) => {
     res.send('Login get');
 }
-module.exports.login_post = (req, res) => {
-    const { name, password } = req.body;
+module.exports.login_post = async (req, res) => {
+    const { email, password } = req.body;
+    var check = await dbcmd.findEmail(email);
+    if (check) {
+        check = await dbcmd.getPassword(email, password);
+        if (check) {
+            res.send("Succesfull login");
+        }
+        else {
 
-    res.send('Login Post');
+            res.send("Password incorrect");
+        }
+    }
+    else {
+        res.send('Email not found');
+    }
 }
 module.exports.signup_get = (req, res) => {
     res.send('Sign up get ');

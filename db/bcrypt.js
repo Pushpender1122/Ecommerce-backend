@@ -26,7 +26,7 @@ module.exports.checkPassword = async (password, hash) => {
                 reject(err.message);
             }
             else {
-                console.log(result);
+                // console.log(result);
                 resolve(result);
             }
         });
