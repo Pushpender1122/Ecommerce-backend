@@ -5,13 +5,8 @@ const path = require('path');
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         try {
-            // console.log(req.body);
-            const itemPath = path.join('./uploads', req.body.item_name);
-            // req.file.path = itemPath;
-            // console.log(req.file.path);
-            req.img = itemPath;
-            // console.log(itemPath);
-
+            const itemPath = path.join('./uploads', req.body.ProductName);
+            req.img = itemPath; // Set initial path to the directory
             fs.mkdirSync(itemPath, { recursive: true });
             cb(null, itemPath);
         } catch (err) {
@@ -21,6 +16,8 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+        const fullFilePath = path.join(req.img, `${uniqueSuffix}-${file.originalname}`);
+        req.img = fullFilePath; // Update req.img to the full path
         cb(null, `${uniqueSuffix}-${file.originalname}`);
     }
 });

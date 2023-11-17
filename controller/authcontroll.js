@@ -1,15 +1,18 @@
+const { model } = require('mongoose');
 const dbcmd = require('../db/dbcmd');
 const Productdb = require('../db/productdb');
 const productModle = require('../db/productSchema');
+const bcrypt = require('../db/bcrypt');
 module.exports.login_get = (req, res) => {
     res.send('Login get');
 }
 module.exports.login_post = async (req, res) => {
-    const { email, password } = req.body.data;
+    const { email, password } = req.body?.data;
     var check = await dbcmd.findEmail(email);
     if (check) {
         check = await dbcmd.getPassword(email, password);
         if (check) {
+            req.flash("email", email);
             res.json({ message: "Succesfull login" });
         }
         else {
@@ -57,6 +60,25 @@ module.exports.signup_post = async (req, res) => {
         res.send(message);
     }
 }
+module.exports.updatePassword = async (req, res) => {
+    try {
+        // console.log(req.body);
+        const email = req.flash("email")[0];
+        const newPAss = req.body.Newpassword;
+        const data = await dbcmd.getPassword(email, req.body?.Password);
+        // console.log("data is " + data);
+        if (data) {
+            const hash = await bcrypt.createHash(newPAss);
+            const NewPassFlag = await dbcmd.UpdataPassword(email, hash);
+            res.json(NewPassFlag);
+        }
+        else {
+            req.json({ success: "false" });
+        }
+    } catch (error) {
+        res.json({ success: "false" })
+    }
+}
 // admin page
 
 // this is mysql
@@ -76,14 +98,19 @@ module.exports.signup_post = async (req, res) => {
 module.exports.addProduct = async (req, res) => {
     const err = { ProductName: "", ProductPrice: "", Category: "" };
     try {
-        const imagePath = req.img;
+        const imagePath = req.img.replace(/\\/g, '/').replace('uploads/', '');
         console.log(imagePath);
         const data = new productModle(req.body);
         console.log(data);
         if (data?.ProductName && data?.ProductPrice && data?.Category[0]?.split(" ")?.join("").length > 1) {
             // console.log(data?.Category?.length);
             const result = await data.save();
-            return res.json({ sucess: "True", data });
+            let user = await productModle.findOne({
+                _id: result._id
+            })
+            user.img.push(imagePath);
+            await user.save();
+            return res.json({ success: "True", data });
         }
         else {
             // console.log(data?.Category[0]?.length);
@@ -97,7 +124,7 @@ module.exports.addProduct = async (req, res) => {
             if (!(data?.Category[0]?.length > 1) || !(data?.Category.length > 1)) {
                 err.Category = "Enter the Product Category";
             }
-            return res.json({ sucess: "False", err });
+            return res.json({ success: "False", err });
         }
     }
     catch (err) {
@@ -106,8 +133,80 @@ module.exports.addProduct = async (req, res) => {
     }
 }
 
-module.exports.fileUpload = (req, res) => {
+module.exports.updateproduct = async (req, res) => {
+    const id = req.query.id;
+    try {
+        // console.log(id);
+        // console.log(req.body);
+        const data = await productModle.updateOne(
+            { _id: id },
+            {
+                $set: { ProductPrice: req.body?.ProductPrice, ProductName: req.body?.ProductName, Description: req.body?.Description, Stock: req.body?.Stock }
+            }
+        )
+        console.log(data);
+        res.send(data);
+    }
+    catch (err) {
+        console.log(err.message);
+        res.send("err");
+    }
+}
+module.exports.deleteprodcut = async (req, res) => {
+    try {
+        const id = req.query.id;
+        const data = await productModle.deleteOne(
+            {
+                _id: id
+            }
+        )
+        if (data.deletedCount == 0) {
+            return res.json({ success: "false", message: "Product Does not exist" });
+        }
+        console.log(data);
+        res.json({ success: "true", message: "Product deleted Success" });
+    } catch (err) {
+        console.log(err.message);
+        res.send("err");
+    }
 
+}
+//Get Product
+
+module.exports.allproductList = async (req, res) => {
+    try {
+        const data = await productModle.find({
+            // ProductName: req.body.ProductName,
+        })
+        console.log(data);
+        if (data.length > 0) {
+            res.json(data);
+        }
+        else {
+            res.send("No Product ");
+        }
+    }
+    catch (err) {
+        console.log(err.message);
+        res.send("Err");
+    }
+
+}
+module.exports.Oneproduct = async (req, res) => {
+    try {
+        const id = req.query.id;
+        console.log(id);
+        // res.send("H");
+        const data = await productModle.findById(id).exec();
+        res.json(data);
+    }
+    catch (err) {
+        console.log(err.message);
+        res.send("err");
+    }
+}
+module.exports.fileUpload = (req, res) => {
+    console.log(req.flash("test"));
     res.send("hlo");
 }
 

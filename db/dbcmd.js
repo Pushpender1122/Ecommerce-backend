@@ -73,24 +73,53 @@ module.exports.NewUser = async (name, email, password) => {
 }
 module.exports.getPassword = async (email, password) => {
     try {
-        const hashPass = await new Promise((resolve, reject) => {
 
+        const hashPass = await new Promise((resolve, reject) => {
             connection.query(`select password from users where email = "${email}"`, (err, data) => {
                 if (err) {
                     console.log(err.message);
                     reject(err.message);
                 }
                 else {
+                    console.log(data);
                     // console.log(data[0].password);
-                    resolve(data[0].password);
+                    if (data[0]?.password) {
+                        // return;
+                        resolve(data[0]?.password);
+                        return
+                    }
+                    resolve(null);
+                    // console.log("not");
+
                 }
             })
         });
-        const Check = await bcrypt.checkPassword(password, hashPass);
-        return Check;
+        if (hashPass != null) {
+
+            const Check = await bcrypt.checkPassword(password, hashPass);
+            console.log(Check);
+            return Check;
+        }
+        else {
+            return false;
+        }
     }
     catch (err) {
         console.log(err);
     }
 }
 
+module.exports.UpdataPassword = async (email, hash) => {
+    const result = await new Promise((res, rej) => {
+        connection.query(`update users set password ='${hash}' where email ='${email}' `, (err, data) => {
+            if (err) {
+                console.log(err);
+                rej(err);
+                return;
+            }
+            // console.log(data);
+            res("True");
+        })
+    });
+    return result;
+}
