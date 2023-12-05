@@ -81,7 +81,7 @@ module.exports.getPassword = async (email, password) => {
                     reject(err.message);
                 }
                 else {
-                    console.log(data);
+                    // console.log(data);
                     // console.log(data[0].password);
                     if (data[0]?.password) {
                         // return;
@@ -112,6 +112,7 @@ module.exports.getPassword = async (email, password) => {
 module.exports.UpdataPassword = async (email, hash) => {
     const result = await new Promise((res, rej) => {
         connection.query(`update users set password ='${hash}' where email ='${email}' `, (err, data) => {
+
             if (err) {
                 console.log(err);
                 rej(err);
@@ -122,4 +123,18 @@ module.exports.UpdataPassword = async (email, hash) => {
         })
     });
     return result;
+}
+module.exports.getId = async (email) => {
+    const user_id = await new Promise((res, rej) => {
+        connection.query(`select * from users where email='${email}'`, (err, data) => {
+            if (err) {
+                rej(err.message);
+                console.log(err.message);
+                return;
+            }
+            res(data[0].ID);
+        })
+    })
+    console.log("user Id " + user_id);
+    return user_id;
 }

@@ -3,17 +3,32 @@ const dbcmd = require('../db/dbcmd');
 const Productdb = require('../db/productdb');
 const productModle = require('../db/productSchema');
 const bcrypt = require('../db/bcrypt');
+const jwt = require('../jwt/jwt');
+// var cookie = require('cookie');
 module.exports.login_get = (req, res) => {
+
     res.send('Login get');
 }
 module.exports.login_post = async (req, res) => {
-    const { email, password } = req.body?.data;
+    const { email, password } = (req.body && req.body.data) || {};
+    // const { email, password } = req.body?.data;
     var check = await dbcmd.findEmail(email);
     if (check) {
         check = await dbcmd.getPassword(email, password);
         if (check) {
+            const token = await jwt.createjwt(email);
+            res.cookie('jwt', token, {
+                maxAge: 1000 * 60 * 60,
+                httpOnly: true,
+                // domain: 'localhost', // Replace 'localhost' with your desired domain
+                secure: false
+            });
+            // res.setHeader('Set-Cookie', cookie.serialize('jwt', String(jwt), {
+            //     httpOnly: true,
+            //     maxAge: 1000 * 60 * 60
+            // }));
             req.flash("email", email);
-            res.json({ message: "Succesfull login" });
+            res.json({ message: "Succesfull login", token });
         }
         else {
 
@@ -99,9 +114,9 @@ module.exports.addProduct = async (req, res) => {
     const err = { ProductName: "", ProductPrice: "", Category: "" };
     try {
         const imagePath = req.img.replace(/\\/g, '/').replace('uploads/', '');
-        console.log(imagePath);
+        // console.log(imagePath);
         const data = new productModle(req.body);
-        console.log(data);
+        // console.log(data);
         if (data?.ProductName && data?.ProductPrice && data?.Category[0]?.split(" ")?.join("").length > 1) {
             // console.log(data?.Category?.length);
             const result = await data.save();
@@ -144,7 +159,7 @@ module.exports.updateproduct = async (req, res) => {
                 $set: { ProductPrice: req.body?.ProductPrice, ProductName: req.body?.ProductName, Description: req.body?.Description, Stock: req.body?.Stock }
             }
         )
-        console.log(data);
+        // console.log(data);
         res.send(data);
     }
     catch (err) {
@@ -163,7 +178,7 @@ module.exports.deleteprodcut = async (req, res) => {
         if (data.deletedCount == 0) {
             return res.json({ success: "false", message: "Product Does not exist" });
         }
-        console.log(data);
+        // console.log(data);
         res.json({ success: "true", message: "Product deleted Success" });
     } catch (err) {
         console.log(err.message);
@@ -178,7 +193,7 @@ module.exports.allproductList = async (req, res) => {
         const data = await productModle.find({
             // ProductName: req.body.ProductName,
         })
-        console.log(data);
+        // console.log(data);
         if (data.length > 0) {
             res.json(data);
         }
@@ -196,6 +211,7 @@ module.exports.Oneproduct = async (req, res) => {
     try {
         const id = req.query.id;
         console.log(id);
+        console.log(req.cookies);
         // res.send("H");
         const data = await productModle.findById(id).exec();
         res.json(data);

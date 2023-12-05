@@ -7,16 +7,23 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const flash = require('connect-flash');
 const app = express();
+
+
+// const jwt = require('./jwt/jwt');
 app.use(session({
     secret: 'RandomTExtFOrHa23!@3',
     resave: false,
     saveUninitialized: true,
     // cookie: { secure: true } 
 }));
+app.use(cookieParser());
 app.use(express.static('uploads'));
 app.use(flash());
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // Replace with your frontend URL
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
