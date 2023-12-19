@@ -94,6 +94,11 @@ module.exports.updatePassword = async (req, res) => {
         res.json({ success: "false" })
     }
 }
+module.exports.getprofile = (req, res) => {
+    // res.send(req.flash("email")[0]);
+    // console.log(req.);
+    res.send("Hlo");
+}
 // admin page
 
 // this is mysql

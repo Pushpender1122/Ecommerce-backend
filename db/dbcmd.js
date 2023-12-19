@@ -138,3 +138,19 @@ module.exports.getId = async (email) => {
     console.log("user Id " + user_id);
     return user_id;
 }
+module.exports.getuserdetails = async (id) => {
+    const userDetail = await new Promise((res, rej) => {
+        connection.query(`select name,email from users where id=${id}`, (err, data) => {
+            if (err) {
+                console.log(err);
+                rej(err.message);
+            }
+            else {
+                console.log(data);
+                res(data);
+            }
+        })
+    })
+    return userDetail;
+
+}

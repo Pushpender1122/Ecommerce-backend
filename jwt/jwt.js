@@ -13,4 +13,25 @@ module.exports.createjwt = async (email) => {
         throw new Error('Failed to create JWT token');
     }
 };
+module.exports.verifytoken = (token) => {
+    try {
+        const decoded = jwt.verify(token, key);
+
+        console.log(decoded);
+        return 1;
+        // res.status(200).json({ data: decoded, message: 'Token verified successfully' });
+    } catch (error) {
+        // console.error(error);
+        if (error instanceof jwt.TokenExpiredError) {
+            // Token has expired
+            // res.status(401).json({ message: 'Token has expired' });
+            console.log("Token is expired");
+        } else {
+            // Other verification errors
+            // res.status(401).json({ message: 'Token verification failed' });
+            console.log("Token verification failed")
+        }
+        return 0;
+    }
+}
 

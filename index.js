@@ -8,7 +8,6 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const app = express();
 
-
 // const jwt = require('./jwt/jwt');
 app.use(session({
     secret: 'RandomTExtFOrHa23!@3',
@@ -26,7 +25,9 @@ app.use(cors({
 }));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 dotenv.config();
 
 const PORT = process.env.PORT || 4500;
