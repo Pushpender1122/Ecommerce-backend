@@ -25,7 +25,8 @@ routes.delete('/auth/admin/deleteprodcut/:id', authcontrol.deleteprodcut);
 //getProduct
 
 routes.get('/productList', authcontrol.allproductList)
-routes.get('/product/:?', authcontrol.Oneproduct)
+routes.get('/product/:?', authcontrol.Oneproduct);
+routes.post('/cartList', authcontrol.CartProductList);
 
 
 // home page

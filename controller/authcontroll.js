@@ -226,6 +226,28 @@ module.exports.Oneproduct = async (req, res) => {
         res.send("err");
     }
 }
+module.exports.CartProductList = async (req, res) => {
+    const CartItemsId = req.body;
+    try {
+        const promises = CartItemsId.map(async (element) => {
+            return await productModle.findById(element.id).exec();
+        });
+
+        const responceObject = await Promise.all(promises);
+
+        // Rearrange the responses according to the original order
+        const orderedResponse = CartItemsId.map((element) => {
+            const found = responceObject.find((item) => item._id.equals(element.id));
+            return found;
+        });
+
+        res.json(orderedResponse);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
 module.exports.fileUpload = (req, res) => {
     console.log(req.flash("test"));
     res.send("hlo");
