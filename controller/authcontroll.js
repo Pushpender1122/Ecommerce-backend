@@ -43,7 +43,7 @@ module.exports.signup_get = (req, res) => {
     res.send('Sign up get ');
 }
 module.exports.signup_post = async (req, res) => {
-    const { name, email, password } = req.body.data;
+    const { name, email, password } = req.body.data || [];
     var message = { Name: "", Email: "", Password: "" };
     dbcmd.createTable();
     console.log(name, email, password);
@@ -78,20 +78,21 @@ module.exports.signup_post = async (req, res) => {
 module.exports.updatePassword = async (req, res) => {
     try {
         // console.log(req.body);
-        const email = req.flash("email")[0];
+        const email = req.flash("email")[0] || '';
         const newPAss = req.body.Newpassword;
         const data = await dbcmd.getPassword(email, req.body?.Password);
         // console.log("data is " + data);
+        console.log(email, newPAss, data);
         if (data) {
             const hash = await bcrypt.createHash(newPAss);
-            const NewPassFlag = await dbcmd.UpdataPassword(email, hash);
+            const NewPassFlag = await dbcmd.updatePassword(email, hash);
             res.json(NewPassFlag);
         }
         else {
-            req.json({ success: "false" });
+            req.json({ success: "false", data: data });
         }
     } catch (error) {
-        res.json({ success: "false" })
+        res.json({ success: "false", error })
     }
 }
 module.exports.getprofile = (req, res) => {
