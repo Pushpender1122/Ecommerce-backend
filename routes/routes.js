@@ -16,9 +16,9 @@ routes.get('/auth/user/profile', middlewares.checkjwt, authcontrol.getprofile);
 routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
 
 // admin page
-routes.post('/auth/admin/addproduct', upload, authcontrol.addProduct);
-routes.put('/auth/admin/updateproduct/:id', authcontrol.updateproduct);
-routes.delete('/auth/admin/deleteprodcut/:id', authcontrol.deleteprodcut);
+routes.post('/auth/admin/addproduct', upload, middlewares.AdminRoute, authcontrol.addProduct);
+routes.put('/auth/admin/updateproduct/:id', middlewares.AdminRoute, authcontrol.updateproduct);
+routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontrol.deleteprodcut);
 // file upload
 // routes.post('/auth/admin/fileupload', authcontrol.fileUpload);
 

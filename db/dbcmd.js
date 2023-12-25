@@ -93,7 +93,7 @@ module.exports.getId = async (email) => {
 };
 module.exports.getuserdetails = async (id) => {
     try {
-        const userDetail = await User.findById(id, 'name email');
+        const userDetail = await User.findById(id);
 
         if (userDetail) {
             console.log(userDetail);

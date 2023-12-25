@@ -16,7 +16,9 @@ module.exports.login_post = async (req, res) => {
     if (check) {
         check = await dbcmd.getPassword(email, password);
         if (check) {
+            var id = await dbcmd.getId(email);
             const token = await jwt.createjwt(email);
+            const user = await dbcmd.getuserdetails(id);
             res.cookie('jwt', token, {
                 maxAge: 1000 * 60 * 60,
                 httpOnly: true,
@@ -28,7 +30,7 @@ module.exports.login_post = async (req, res) => {
             //     maxAge: 1000 * 60 * 60
             // }));
             req.flash("email", email);
-            res.json({ message: "Succesfull login", token });
+            res.json({ message: "Succesfull login", userRole: user.role });
         }
         else {
 
@@ -153,7 +155,7 @@ module.exports.addProduct = async (req, res) => {
     }
     catch (err) {
         console.log(err?.message);
-        res.send(err?.errors);
+        res.send(err.message);
     }
 }
 

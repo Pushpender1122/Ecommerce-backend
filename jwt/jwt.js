@@ -18,7 +18,7 @@ module.exports.verifytoken = (token) => {
         const decoded = jwt.verify(token, key);
 
         console.log(decoded);
-        return 1;
+        return { success: 1, user: decoded };
         // res.status(200).json({ data: decoded, message: 'Token verified successfully' });
     } catch (error) {
         // console.error(error);
@@ -31,7 +31,7 @@ module.exports.verifytoken = (token) => {
             // res.status(401).json({ message: 'Token verification failed' });
             console.log("Token verification failed")
         }
-        return 0;
+        return { success: 0 };
     }
 }
 
