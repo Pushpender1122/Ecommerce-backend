@@ -99,6 +99,9 @@ module.exports.getprofile = (req, res) => {
     // console.log(req.);
     res.send("Hlo");
 }
+module.exports.logout = (req, res) => {
+    res.clearCookie("jwt").status(200).json({ message: "Successfully logged out" });
+}
 // admin page
 
 // this is mysql

@@ -13,7 +13,7 @@ routes.post('/auth/user/login', authcontrol.login_post);
 routes.post('/auth/user/signup', authcontrol.signup_post);
 routes.put('/auth/user/updatePassword', authcontrol.updatePassword);
 routes.get('/auth/user/profile', middlewares.checkjwt, authcontrol.getprofile);
-
+routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
 
 // admin page
 routes.post('/auth/admin/addproduct', upload, authcontrol.addProduct);
