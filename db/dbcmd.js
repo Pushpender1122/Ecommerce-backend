@@ -96,7 +96,7 @@ module.exports.getuserdetails = async (id) => {
         const userDetail = await User.findById(id);
 
         if (userDetail) {
-            console.log(userDetail);
+            // console.log(userDetail);
             return userDetail;
         } else {
             throw new Error('User details not found');
@@ -106,6 +106,22 @@ module.exports.getuserdetails = async (id) => {
         throw err;
     }
 };
+module.exports.updateProfileImage = async (filepath, id) => {
+    try {
+        const responce = await User.updateOne(
+            {
+                _id: id
+            },
+            {
+                $set: { img: filepath }
+            }
+        )
+        return responce;
+    } catch (error) {
+        return error
+    }
+
+}
 // module.exports.findEmail = async (email) => {
 //     try {
 //         const data = await new Promise((resolve, reject) => {

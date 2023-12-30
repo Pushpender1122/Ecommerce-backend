@@ -3,6 +3,7 @@ const authcontrol = require('../controller/authcontroll');
 const routes = express();
 const upload = require('../middleware/fileupl');
 const middlewares = require('../middleware/privateroute');
+const uploadUserProfile = require('../middleware/userprofileupload');
 // login page
 routes.use(express.json());
 
@@ -11,11 +12,14 @@ routes.use(express.json());
 routes.post('/auth/user/login', authcontrol.login_post);
 // routes.get('/auth/user/signup', authcontrol.signup_get);
 routes.post('/auth/user/signup', authcontrol.signup_post);
-routes.put('/auth/user/updatePassword', authcontrol.updatePassword);
-routes.get('/auth/user/profile', middlewares.checkjwt, authcontrol.getprofile);
+routes.put('/auth/user/updatePassword', middlewares.checkjwt, authcontrol.updatePassword);
+routes.get('/auth/user/profile/:id', middlewares.checkjwt, authcontrol.getprofile);
+routes.post('/auth/user/profile/:id/editprofile', uploadUserProfile, authcontrol.editProfile);
 routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
 
 // admin page
+routes.get('/auth/admin/Check', middlewares.AdminRoute, authcontrol.dashboard);
+routes.get('/auth/user/profile', middlewares.AdminRoute, authcontrol.getprofile);
 routes.post('/auth/admin/addproduct', upload, middlewares.AdminRoute, authcontrol.addProduct);
 routes.put('/auth/admin/updateproduct/:id', middlewares.AdminRoute, authcontrol.updateproduct);
 routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontrol.deleteprodcut);

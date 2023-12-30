@@ -4,7 +4,9 @@ const Productdb = require('../db/productdb');
 const productModle = require('../db/productSchema');
 const bcrypt = require('../db/bcrypt');
 const jwt = require('../jwt/jwt');
+const { uploadToCloudinary } = require('../utility/cloudinary');
 // var cookie = require('cookie');
+
 module.exports.login_get = (req, res) => {
 
     res.send('Login get');
@@ -30,7 +32,7 @@ module.exports.login_post = async (req, res) => {
             //     maxAge: 1000 * 60 * 60
             // }));
             req.flash("email", email);
-            res.json({ message: "Succesfull login", userRole: user.role });
+            res.json({ message: "Succesfull login", userRole: user.role, userId: user._id });
         }
         else {
 
@@ -97,10 +99,46 @@ module.exports.updatePassword = async (req, res) => {
         res.json({ success: "false", error })
     }
 }
-module.exports.getprofile = (req, res) => {
-    // res.send(req.flash("email")[0]);
-    // console.log(req.);
-    res.send("Hlo");
+module.exports.getprofile = async (req, res) => {
+    try {
+        // Extracting ID from the path
+        const id = req.path.split('/').pop();
+        const userdetails = await dbcmd.getuserdetails(id);
+
+        // Omitting the password field if it exists in userdetails
+        if (userdetails && userdetails.password) {
+            userdetails.password = undefined
+        }
+        // Sending a response
+        res.json({ userdetails });
+    } catch (error) {
+        console.log(error);
+        res.json({ message: error });
+    }
+}
+module.exports.editProfile = async (req, res) => {
+    // console.log(req)
+    try {
+        if (!req.file) {
+            throw new Error('No file uploaded');
+        }
+
+        const response = await uploadToCloudinary(req.file.path, req.file.filename);
+        if (!response || !response.url) {
+            throw new Error('Failed to upload to Cloudinary');
+        }
+
+        const ack = await dbcmd.updateProfileImage(response.url, req.params.id);
+        if (!ack.acknowledged) {
+            throw new Error('Failed to update profile image in the database');
+        }
+
+        res.json({ message: ack.acknowledged });
+    } catch (error) {
+        // console.error('Error:', error);
+        res.status(500).json({ message: error.message || 'Internal Server Error' });
+    }
+
 }
 module.exports.logout = (req, res) => {
     res.clearCookie("jwt").status(200).json({ message: "Successfully logged out" });
@@ -120,7 +158,9 @@ module.exports.logout = (req, res) => {
 //     res.json({ sucess: "true" })
 // }
 // this is mongo
-
+module.exports.dashboard = (req, res) => {
+    res.json({ message: "Admin true" });
+}
 module.exports.addProduct = async (req, res) => {
     const err = { ProductName: "", ProductPrice: "", Category: "" };
     try {

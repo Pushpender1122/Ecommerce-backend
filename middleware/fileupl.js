@@ -5,7 +5,7 @@ const path = require('path');
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         try {
-            const itemPath = path.join('./uploads', req.body.ProductName);
+            const itemPath = path.join('./uploads', req.body.ProductName || req?.body?.params);
             req.img = itemPath; // Set initial path to the directory
             fs.mkdirSync(itemPath, { recursive: true });
             cb(null, itemPath);

@@ -17,7 +17,7 @@ module.exports.verifytoken = (token) => {
     try {
         const decoded = jwt.verify(token, key);
 
-        console.log(decoded);
+        // console.log(decoded);
         return { success: 1, user: decoded };
         // res.status(200).json({ data: decoded, message: 'Token verified successfully' });
     } catch (error) {
