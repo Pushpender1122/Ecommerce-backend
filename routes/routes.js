@@ -14,7 +14,9 @@ routes.post('/auth/user/login', authcontrol.login_post);
 routes.post('/auth/user/signup', authcontrol.signup_post);
 routes.put('/auth/user/updatePassword', middlewares.checkjwt, authcontrol.updatePassword);
 routes.get('/auth/user/profile/:id', middlewares.checkjwt, authcontrol.getprofile);
-routes.post('/auth/user/profile/:id/editprofile', uploadUserProfile, authcontrol.editProfile);
+routes.post('/auth/user/profile/:id/edit/profileimage', uploadUserProfile, middlewares.checkjwt, authcontrol.editProfile);
+routes.post('/auth/user/profile/:id/edit/profile/details', middlewares.checkjwt, authcontrol.updateUserDetails);
+routes.post('/auth/user/profile/:id/edit/profile/address', middlewares.checkjwt, authcontrol.updateOrDeleteAdress);
 routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
 
 // admin page

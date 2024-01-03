@@ -5,6 +5,7 @@ const productModle = require('../db/productSchema');
 const bcrypt = require('../db/bcrypt');
 const jwt = require('../jwt/jwt');
 const { uploadToCloudinary } = require('../utility/cloudinary');
+const User = require('../db/userSchema');
 // var cookie = require('cookie');
 
 module.exports.login_get = (req, res) => {
@@ -139,6 +140,90 @@ module.exports.editProfile = async (req, res) => {
         res.status(500).json({ message: error.message || 'Internal Server Error' });
     }
 
+}
+
+module.exports.updateUserDetails = async (req, res) => {
+    try {
+        const { name, email, label, address } = req.body;
+        const id = req.params.id;
+
+        if (!name && !email && !label && !address) {
+            return res.status(400).json({ message: "Provide the data " });
+        }
+
+        if (name && email) {
+
+            const existingUser = await User.findOne({ email });
+            if (existingUser && existingUser._id.toString() !== id) {
+                return res.status(400).json({ message: "Email already exists for another user" });
+            }
+            const updatedFields = {};
+            if (name) updatedFields.name = name;
+            if (email) updatedFields.email = email;
+
+            try {
+                const result = await User.findByIdAndUpdate(
+                    { _id: id },
+                    updatedFields,
+                    { new: true } // To get the updated document
+                );
+
+                if (!result) {
+                    return res.status(404).json({ message: "User not found" });
+                }
+
+                // result.password = undefined;/
+                return res.json({ message: "User details updated successfully" });
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: "Error updating user details", error });
+            }
+        }
+        else {
+            try {
+                console.log(id);
+                const user = await User.findById(id);
+                if (!user) {
+                    return res.status(404).json({ message: "User not found" });
+                }
+                const newAddress = { label, address };
+                user.addresses.push(newAddress);
+                const result = await user.save();
+                // result.password = undefined;
+                return res.json({ message: "User address updated successfully" });
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: "Error updating user address", error });
+            }
+        }
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server error", error });
+    }
+};
+module.exports.updateOrDeleteAdress = async (req, res) => {
+    // console.log(req.body);
+    try {
+        const userId = req.params.id;
+        // Find the user by ID
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.json({ message: "User not found" });
+            // console.log('User not found');
+        }
+
+        // Update the addresses in the user document
+        user.addresses = req.body;
+        // Save the updated user
+        const updatedUser = await user.save();
+        updatedUser.password = undefined;
+        res.json({ message: "Updated Succesfully", user: updatedUser });
+        // console.log('User updated:', updatedUser);
+    } catch (error) {
+        console.log(error);
+        return res.json({ message: "Error updating addresses" });
+    }
 }
 module.exports.logout = (req, res) => {
     res.clearCookie("jwt").status(200).json({ message: "Successfully logged out" });
@@ -279,11 +364,11 @@ module.exports.CartProductList = async (req, res) => {
             return await productModle.findById(element.id).exec();
         });
 
-        const responceObject = await Promise.all(promises);
+        const responseObject = await Promise.all(promises);
 
         // Rearrange the responses according to the original order
         const orderedResponse = CartItemsId.map((element) => {
-            const found = responceObject.find((item) => item._id.equals(element.id));
+            const found = responseObject.find((item) => item._id.equals(element.id));
             return found;
         });
 

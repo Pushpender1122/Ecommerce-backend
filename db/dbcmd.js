@@ -33,8 +33,12 @@ module.exports.findEmail = async (email) => {
 
 module.exports.NewUser = async (name, email, password) => {
     try {
+        const newAddress = {
+            label: 'Default',
+            address: 'Shop No 1, Lala Compound, Mahakalicave Rd, Near Holy Street Hospital, Andheri (west)'
+        };
         const hashPassword = await bcrypt.createHash(password);
-        const newUser = new User({ name, email, password: hashPassword });
+        const newUser = new User({ name, email, password: hashPassword, addresses: [newAddress] });
         await newUser.save();
         return newUser ? 1 : 0;
     } catch (err) {
