@@ -1,11 +1,13 @@
 const { model } = require('mongoose');
 const dbcmd = require('../db/dbcmd');
-const Productdb = require('../db/productdb');
+// const Productdb = require('../db/productdb');
 const productModle = require('../db/productSchema');
 const bcrypt = require('../db/bcrypt');
 const jwt = require('../jwt/jwt');
 const { uploadToCloudinary } = require('../utility/cloudinary');
 const User = require('../db/userSchema');
+const Order = require('../db/orderSchema');
+const { response } = require('../routes/routes');
 // var cookie = require('cookie');
 
 module.exports.login_get = (req, res) => {
@@ -13,8 +15,9 @@ module.exports.login_get = (req, res) => {
     res.send('Login get');
 }
 module.exports.login_post = async (req, res) => {
-    const { email, password } = (req.body && req.body.data) || {};
+    var { email, password } = (req.body && req.body.data) || {};
     // const { email, password } = req.body?.data;
+    email = email?.toLowerCase();
     var check = await dbcmd.findEmail(email);
     if (check) {
         check = await dbcmd.getPassword(email, password);
@@ -48,38 +51,41 @@ module.exports.signup_get = (req, res) => {
     res.send('Sign up get ');
 }
 module.exports.signup_post = async (req, res) => {
-    const { name, email, password } = req.body.data || [];
+    var { name, email, password } = req.body.data || [];
     var message = { Name: "", Email: "", Password: "" };
-    dbcmd.createTable();
+
     console.log(name, email, password);
+    email = email.toLowerCase();
+    // Validate email using regular expression
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (name?.length < 3) {
-        message.Name = "Name should contain alleast 3 characters";
+        message.Name = "Name should contain at least 3 characters";
     }
-    if (email?.length < 1) {
-        message.Email = "Please enter a email";
+    if (!email || email?.length < 1) {
+        message.Email = "Please enter an email";
+    } else if (!emailRegex.test(email)) {
+        message.Email = "Invalid email format";
     }
-    if (email?.length < 5 && email?.length > 1) {
-        message.Email = "Not valid email";
+    if (!password || password?.length < 1) {
+        message.Password = "Password must be longer than 1 character";
     }
-    if (password?.length < 1) {
-        message.Password = "Password must be long then 1";
-    }
-    if (name?.length >= 3 && email?.length >= 5 && password?.length >= 1) {
+
+    if (name?.length >= 3 && emailRegex.test(email) && password?.length >= 1) {
         let Check = await dbcmd.findEmail(email);
         if (Check) {
-            res.json({ message: "User Already exist" });
-        }
-        else {
+            res.json({ message: "User Already exists" });
+        } else {
             Check = await dbcmd.NewUser(name, email, password);
             if (Check) {
-                res.json({ message: "User Created Succesfull" });
+                res.json({ message: "User Created Successfully" });
             }
         }
-    }
-    else {
+    } else {
         res.send(message);
     }
 }
+
 module.exports.updatePassword = async (req, res) => {
     try {
         // console.log(req.body);
@@ -106,6 +112,8 @@ module.exports.getprofile = async (req, res) => {
         const id = req.path.split('/').pop();
         const userdetails = await dbcmd.getuserdetails(id);
 
+
+        // console.log(userdetails);
         // Omitting the password field if it exists in userdetails
         if (userdetails && userdetails.password) {
             userdetails.password = undefined
@@ -227,6 +235,72 @@ module.exports.updateOrDeleteAdress = async (req, res) => {
 }
 module.exports.logout = (req, res) => {
     res.clearCookie("jwt").status(200).json({ message: "Successfully logged out" });
+}
+//orders
+module.exports.createOrders = async (req, res) => {
+    const id = req.params.id;
+    if (!id) return res.json({ message: "Authentication Failed" });
+
+    const data = req.body.data;
+    console.log(id);
+    console.log(data);
+    try {
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (data.length <= 0) {
+            return res.json({ message: "Add the Product in the Cart" });
+        }
+        const productOutOfStock = [];
+        for (const element of data) {
+            const product = await productModle.findById(element.id);
+            if (!product) {
+                return res.status(404).json({ message: `Product with ID ${element.id} not found` });
+            }
+            if (element.numberOfItems <= product.Stock) {
+                const order = new Order({
+                    userId: id,
+                    items: {
+                        productName: product.ProductName,
+                        quantity: element.numberOfItems
+                    }
+                });
+                await order.save();
+                user.orders.push(order._id);
+
+                product.Stock -= element.numberOfItems;
+                await product.save();
+            } else {
+                productOutOfStock.push({ id: element.id, message: `This product (${product.ProductName}) has only ${product.Stock} in stock` });
+            }
+        }
+
+        await user.save();
+
+        if (productOutOfStock.length > 0) {
+            return res.status(200).json({ message: "Some products are out of stock", productOutOfStock });
+        }
+        return res.json({ message: "Orders placed successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error creating orders" });
+    }
+};
+
+module.exports.allorders = async (req, res) => {
+    const Allorder = await Order.find();
+    res.json({ "order": Allorder });
+}
+module.exports.userOrder = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const orders = await Order.find({ userId: id });
+        res.json({ "Orders": orders });
+    } catch (error) {
+        res.json({ "Error": error.message });
+    }
+    // console.log(id);
 }
 // admin page
 

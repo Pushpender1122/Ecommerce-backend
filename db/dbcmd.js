@@ -1,26 +1,26 @@
-const connection = require('../db/db');
+// const connection = require('../db/db');
 const bcrypt = require('./bcrypt');
 const User = require('./userSchema');
-const createTableCmd = `Create table if not EXISTS users (
-    ID varchar(255),
-    Name varchar(255),
-    Email varchar(255) PRIMARY KEY,
-    Password varchar(255)
-);`;
+// const createTableCmd = `Create table if not EXISTS users (
+//     ID varchar(255),
+//     Name varchar(255),
+//     Email varchar(255) PRIMARY KEY,
+//     Password varchar(255)
+// );`;
 
-module.exports.createTable = () => {
-    try {
-        connection.query(createTableCmd, (err) => {
-            if (err) {
-                console.log(err.message);
-            }
+// module.exports.createTable = () => {
+//     try {
+//         connection.query(createTableCmd, (err) => {
+//             if (err) {
+//                 console.log(err.message);
+//             }
 
-        })
-    } catch (err) {
-        console.log(err);
-        throw err;
-    }
-}
+//         })
+//     } catch (err) {
+//         console.log(err);
+//         throw err;
+//     }
+// }
 module.exports.findEmail = async (email) => {
     try {
         const user = await User.findOne({ email });
@@ -97,7 +97,7 @@ module.exports.getId = async (email) => {
 };
 module.exports.getuserdetails = async (id) => {
     try {
-        const userDetail = await User.findById(id);
+        const userDetail = await User.findById(id).populate('orders');
 
         if (userDetail) {
             // console.log(userDetail);

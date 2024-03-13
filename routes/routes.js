@@ -21,7 +21,8 @@ routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
 
 // admin page
 routes.get('/auth/admin/Check', middlewares.AdminRoute, authcontrol.dashboard);
-routes.get('/auth/user/profile', middlewares.AdminRoute, authcontrol.getprofile);
+routes.get('/auth/user/profile/:id', middlewares.AdminRoute, authcontrol.getprofile);
+routes.get('/auth/admin/allorders', middlewares.AdminRoute, authcontrol.allorders);
 routes.post('/auth/admin/addproduct', upload, middlewares.AdminRoute, authcontrol.addProduct);
 routes.put('/auth/admin/updateproduct/:id', middlewares.AdminRoute, authcontrol.updateproduct);
 routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontrol.deleteprodcut);
@@ -34,9 +35,10 @@ routes.get('/productList', authcontrol.allproductList)
 routes.get('/product/:?', authcontrol.Oneproduct);
 routes.post('/cartList', authcontrol.CartProductList);
 
-
+//ORDERS
+routes.post('/auth/user/profile/:id/orders/createorder', authcontrol.createOrders);
+routes.get('/auth/user/profile/:id/orders', authcontrol.userOrder);
 // home page
-
 routes.get('/', authcontrol.homepage_get);
 
 module.exports = routes;

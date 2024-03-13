@@ -10,7 +10,11 @@ const userSchema = new mongoose.Schema({
     password: String,
     role: { type: String, default: 'user' },
     addresses: [addressSchema],
-    img: { type: String, default: '' }
+    img: { type: String, default: '' },
+    orders: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order"
+    }]
 });
 
 const User = mongoose.model('User', userSchema);
