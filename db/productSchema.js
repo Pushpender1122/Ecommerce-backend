@@ -26,6 +26,14 @@ const ProductSchema = new mongoose.Schema({
     Stock: {
         type: Number,
         default: 1
+    },
+    RatingMessage: {
+        type: [{
+            Rating: Number,
+            message: String,
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+        }],
+        default: []
     }
 })
 

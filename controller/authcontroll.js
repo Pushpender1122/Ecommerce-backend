@@ -302,6 +302,41 @@ module.exports.userOrder = async (req, res) => {
     }
     // console.log(id);
 }
+module.exports.orderStatus = (req, res) => {
+    const data = req.body.data || [];
+    if (data.length <= 0) {
+        return res.json({ "message": "Please provide data" });
+    }
+    try {
+        data.forEach(async (value, i) => {
+            await Order.findByIdAndUpdate(
+                { _id: value.orderId },
+                { orderStatus: value.orderStatus },
+            );
+        })
+        res.json({ "message": "Changes Succesfully updated" })
+    } catch (error) {
+        res.json({ "message": error });
+    }
+}
+module.exports.userRoleUpdate = async (req, res) => {
+    const data = req.body.data || [];
+    if (data.length <= 0) {
+        return res.json({ "message": "Please provide data" });
+    }
+    try {
+        data.forEach(async (value, i) => {
+            await User.findByIdAndUpdate(
+                { _id: value.userId },
+                { role: value.role },
+            );
+        })
+        res.json({ "message": "Changes Succesfully updated" })
+    } catch (error) {
+        res.json({ "message": error });
+    }
+
+}
 // admin page
 
 // this is mysql
@@ -399,23 +434,94 @@ module.exports.deleteprodcut = async (req, res) => {
 //Get Product
 
 module.exports.allproductList = async (req, res) => {
+    const { rating, category, price, productname } = req.query;
+    let query = {};
+    if (productname) {
+        query.ProductName = { $regex: productname, $options: 'i' };
+    }
+    if (rating) {
+        query.Rating = { $gte: parseInt(rating) };
+    }
+    if (price) {
+        const [minPrice, maxPrice] = price.split('-').map(parseFloat);
+        query.ProductPrice = { $gte: minPrice, $lte: maxPrice };
+    }
     try {
-        const data = await productModle.find({
-            // ProductName: req.body.ProductName,
-        })
-        // console.log(data);
-        if (data.length > 0) {
-            res.json(data);
+        let filterProduct = await productModle.find(query);
+        if (filterProduct.length === 0 && productname) {
+            let newquery = {};
+            if (query.Rating) {
+                newquery.Rating = query.Rating;
+            }
+            if (query.ProductPrice) {
+                newquery.ProductPrice = query.ProductPrice;
+            }
+            if (Object.keys(newquery).length === 0) {
+                filterProduct = await productModle.find({});
+            } else {
+                filterProduct = await productModle.find(newquery);
+            }
+            filterProduct = filterProduct.filter((value) => value.Category[0].toLocaleLowerCase().match(productname.toLocaleLowerCase()));
         }
-        else {
-            res.send("No Product ");
+        if (filterProduct.length === 0 && productname) {
+            let newquery = {};
+            if (query.Rating) {
+                newquery.Rating = query.Rating;
+            }
+            if (query.ProductPrice) {
+                newquery.ProductPrice = query.ProductPrice;
+            }
+            if (Object.keys(newquery).length === 0) {
+                filterProduct = await productModle.find({});
+            } else {
+                filterProduct = await productModle.find(newquery);
+            }
+            filterProduct = filterProduct.filter((value) => value.Description.toLocaleLowerCase().match(productname.toLocaleLowerCase()));
         }
+        return res.json(filterProduct);
+    } catch (error) {
+        console.log(error);
+        return res.json({ "err": "Provide wrong parameter" });
     }
-    catch (err) {
-        console.log(err.message);
-        res.send("Err");
-    }
+}
 
+module.exports.productupdate = async (req, res) => {
+    const { userID, productID, rating, message } = req.body;
+    try {
+        const user = await User.findById(userID);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const product = await productModle.findById(productID);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ message: "Rating must be between 1 and 5" });
+        }
+        if (message.length < 1) {
+            return res.status(400).json({ message: "Message must not be empty" });
+        }
+        const ratingMessage = {
+            Rating: rating,
+            message,
+            userId: userID
+        };
+        product.RatingMessage.push(ratingMessage);
+        let totalRating = 0;
+        product.RatingMessage.forEach((rating) => {
+            totalRating += rating.Rating;
+        });
+        totalRating += rating;
+        product.Rating = totalRating / (product.RatingMessage.length + 1);
+        await product.save();
+
+        return res.json({ message: "Rating and message added successfully" });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error adding rating and message" });
+    }
 }
 module.exports.Oneproduct = async (req, res) => {
     try {
