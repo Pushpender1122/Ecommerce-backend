@@ -34,7 +34,7 @@ routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontr
 //getProduct
 
 routes.get('/productList', authcontrol.allproductList)
-routes.post('/product', middlewares.checkjwt, authcontrol.productupdate)
+routes.post('/product/review', middlewares.checkjwt, authcontrol.productupdate)
 routes.get('/product/:', authcontrol.Oneproduct);
 routes.post('/cartList', authcontrol.CartProductList);
 //ORDERS

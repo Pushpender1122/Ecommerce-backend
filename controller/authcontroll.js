@@ -356,11 +356,13 @@ module.exports.dashboard = (req, res) => {
     res.json({ message: "Admin true" });
 }
 module.exports.addProduct = async (req, res) => {
-    const err = { ProductName: "", ProductPrice: "", Category: "" };
+    const err = { ProductName: "", ProductPrice: "", Category: "", HighligthPoint: "" };
     try {
         const imagePath = req.img.replace(/\\/g, '/').replace('uploads/', '');
         // console.log(imagePath);
         const data = new productModle(req.body);
+        let arr = JSON.parse(req.body.HighligthPoint).split(","); // Convert string to array
+        data.HighligthPoint = arr;
         // console.log(data);
         if (data?.ProductName && data?.ProductPrice && data?.Category[0]?.split(" ")?.join("").length > 1) {
             // console.log(data?.Category?.length);
@@ -383,6 +385,9 @@ module.exports.addProduct = async (req, res) => {
             }
             if (!(data?.Category[0]?.length > 1) || !(data?.Category.length > 1)) {
                 err.Category = "Enter the Product Category";
+            }
+            if (!(data?.HighligthPoint?.length > 1)) {
+                err.HighligthPoint = "Enter the Product HighligthPoint";
             }
             return res.json({ success: "False", err });
         }
@@ -487,6 +492,7 @@ module.exports.allproductList = async (req, res) => {
 
 module.exports.productupdate = async (req, res) => {
     const { userID, productID, rating, message } = req.body;
+    console.log(userID, productID, rating, message)
     try {
         const user = await User.findById(userID);
         if (!user) {
@@ -507,6 +513,25 @@ module.exports.productupdate = async (req, res) => {
             message,
             userId: userID
         };
+        // console.log(product)
+        var userCheck = product.RatingMessage.find((value) => value.userId == userID);
+        // console.log(userCheck)
+        if (userCheck) {
+            product.RatingMessage.forEach((value) => {
+                if (value.userId == userID) {
+                    value.Rating = rating;
+                    value.message = message;
+                }
+            })
+            let totalRating = 0;
+            product.RatingMessage.forEach((rating) => {
+                totalRating += rating.Rating;
+            });
+            product.Rating = totalRating / (product.RatingMessage.length);
+            await product.save();
+            return res.json({ message: "Rating and message updated successfully" });
+
+        }
         product.RatingMessage.push(ratingMessage);
         let totalRating = 0;
         product.RatingMessage.forEach((rating) => {
@@ -529,7 +554,7 @@ module.exports.Oneproduct = async (req, res) => {
         console.log(id);
         console.log(req.cookies);
         // res.send("H");
-        const data = await productModle.findById(id).exec();
+        const data = await productModle.findById(id).populate('RatingMessage.userId').exec();
         res.json(data);
     }
     catch (err) {

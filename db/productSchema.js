@@ -19,6 +19,10 @@ const ProductSchema = new mongoose.Schema({
         type: [String],
         required: true
     },
+    HighligthPoint: {
+        type: [String],
+        required: true
+    },
     Rating: {
         type: Number,
         default: 0,
