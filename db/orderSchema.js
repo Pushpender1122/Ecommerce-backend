@@ -7,7 +7,12 @@ const orderSchema = new mongoose.Schema({
     orderStatus: { type: String, default: "Pending" },
     items: {
         productName: String,
-        quantity: Number
+        quantity: { type: Number, default: 1 },
+        price: Number,
+        image: String,
+        discount: { type: Number, default: 0 },
+        address: String,
+        total: Number
     }
 })
 const Order = mongoose.model('Order', orderSchema);
