@@ -34,6 +34,6 @@ const PORT = process.env.PORT || 4500;
 
 app.use(route);
 
-app.listen(PORT, '192.168.161.10', () => {
+app.listen(PORT, () => {
     console.log(`Server running on PORT ${PORT}`);
 })
