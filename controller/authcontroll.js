@@ -483,7 +483,9 @@ module.exports.deleteuser = async (req, res) => {
         res.send({ message: "Error" });
     }
 }
-
+module.exports.adminCheck = async (req, res) => {
+    res.json({ message: "Admin true" });
+}
 module.exports.dashboard = async (req, res) => {
     const details = {};
     try {
@@ -520,10 +522,27 @@ module.exports.dashboard = async (req, res) => {
 
 module.exports.addProduct = async (req, res) => {
     const err = { ProductName: "", ProductPrice: "", Category: "", HighligthPoint: "" };
+    var imgUrl = '';
+    try {
+        if (!req.file) {
+            throw new Error('No file uploaded');
+        }
+        const response = await uploadToCloudinary(req.file.path, req.file.filename);
+        if (!response || !response.url) {
+            throw new Error('Failed to upload to Cloudinary');
+        }
+        imgUrl = response.url;
+        console.log("Uploaded ")
+    } catch (error) {
+        // console.error('Error:', error);
+        return res.status(500).json({ message: error.message || 'Internal Server Error' });
+
+    }
     try {
         // if req.img is not available, file not uploaded
-        const imagePath = req.img.replace(/\\/g, '/')?.replace('uploads/', '');
+        // const imagePath = req.img.replace(/\\/g, '/')?.replace('uploads/', '');
         // console.log(imagePath);
+
         const data = new productModle(req.body);
         let arr = JSON.parse(req.body.HighligthPoint).split(","); // Convert string to array
         data.HighligthPoint = arr;
@@ -534,7 +553,7 @@ module.exports.addProduct = async (req, res) => {
             let user = await productModle.findOne({
                 _id: result._id
             })
-            user.img.push(imagePath);
+            user.img.push(imgUrl);
             await user.save();
             return res.json({ success: "True", data });
         }
@@ -564,7 +583,20 @@ module.exports.addProduct = async (req, res) => {
 
 module.exports.updateproduct = async (req, res) => {
     const id = req.params.id;
-    console.log(JSON.parse(req.body.HighligthPoint))
+    var imgUrl = '';
+    try {
+        if (!req.file) {
+            throw new Error('No file uploaded');
+        }
+        const response = await uploadToCloudinary(req.file.path, req.file.filename);
+        if (!response || !response.url) {
+            throw new Error('Failed to upload to Cloudinary');
+        }
+        imgUrl = response.url;
+    } catch (error) {
+        // console.error('Error:', error);
+        res.status(500).json({ message: error.message || 'Internal Server Error' });
+    }
     let updateFields = {
         ProductPrice: req.body?.ProductPrice,
         ProductName: req.body?.ProductName,
@@ -574,9 +606,9 @@ module.exports.updateproduct = async (req, res) => {
         HighligthPoint: req.body?.HighligthPoint ? JSON.parse(req.body?.HighligthPoint) : ''
     };
     // console.log(updateFields.HighligthPoint.split(','));
-    if (req.img) {
-        var imagePath = req.img.replace(/\\/g, '/')?.replace('uploads/', '');
-        updateFields.img = imagePath;
+    if (req.file) {
+
+        updateFields.img = imgUrl;
     }
     try {
         const data = await productModle.updateOne(

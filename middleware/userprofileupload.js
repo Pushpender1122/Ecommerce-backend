@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, req.params.id + '-' + '.png')
+        cb(null, (req.params.id || Date.now()) + '-' + '.png')
     }
 })
 // const storage = multer.diskStorage({
@@ -31,5 +31,5 @@ const storage = multer.diskStorage({
 // })
 
 // const uploadUserProfile = multer({ storage: storage })
-const uploadUserProfile = multer({ storage: storage }).single('profileimage');
+const uploadUserProfile = multer({ storage: storage }).single('img');
 module.exports = uploadUserProfile;

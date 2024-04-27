@@ -22,12 +22,13 @@ routes.get('/auth/user/getrazerToken', middlewares.checkjwt, authcontrol.getRaze
 
 // admin page
 routes.get('/auth/admin/dashboard', middlewares.AdminRoute, authcontrol.dashboard);
+routes.get('/auth/admin/check', middlewares.AdminRoute, authcontrol.adminCheck);
 routes.get('/auth/user/profile/:id', middlewares.AdminRoute, authcontrol.getprofile);
 routes.get('/auth/admin/allorders', middlewares.AdminRoute, authcontrol.allorders);
 routes.post('/auth/admin/allorders/status', middlewares.AdminRoute, authcontrol.orderStatus);
-routes.post('/auth/admin/addproduct', upload, middlewares.AdminRoute, authcontrol.addProduct);
+routes.post('/auth/admin/addproduct', uploadUserProfile, middlewares.AdminRoute, authcontrol.addProduct);
 routes.post('/auth/admin/userrole', middlewares.AdminRoute, authcontrol.userRoleUpdate);
-routes.put('/auth/admin/updateproduct/:id', upload, middlewares.AdminRoute, authcontrol.updateproduct);
+routes.put('/auth/admin/updateproduct/:id', uploadUserProfile, middlewares.AdminRoute, authcontrol.updateproduct);
 routes.get('/auth/admin/allusers', middlewares.AdminRoute, authcontrol.allusers);
 routes.delete('/auth/admin/deleteuser/:id', middlewares.AdminRoute, authcontrol.deleteuser);
 routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontrol.deleteprodcut);
