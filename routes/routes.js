@@ -23,7 +23,7 @@ routes.get('/auth/user/getrazerToken', middlewares.checkjwt, authcontrol.getRaze
 // admin page
 routes.get('/auth/admin/dashboard', middlewares.AdminRoute, authcontrol.dashboard);
 routes.get('/auth/user/profile/:id', middlewares.AdminRoute, authcontrol.getprofile);
-routes.get('/auth/admin/allorders', authcontrol.allorders);
+routes.get('/auth/admin/allorders', middlewares.AdminRoute, authcontrol.allorders);
 routes.post('/auth/admin/allorders/status', middlewares.AdminRoute, authcontrol.orderStatus);
 routes.post('/auth/admin/addproduct', upload, middlewares.AdminRoute, authcontrol.addProduct);
 routes.post('/auth/admin/userrole', middlewares.AdminRoute, authcontrol.userRoleUpdate);
@@ -42,8 +42,8 @@ routes.post('/product/review', middlewares.checkjwt, authcontrol.productupdate)
 routes.get('/product/:', authcontrol.Oneproduct);
 routes.post('/cartList', authcontrol.CartProductList);
 //ORDERS
-routes.post('/auth/user/profile/:id/orders/createorder', authcontrol.createOrders);
-routes.get('/auth/user/profile/:id/orders', authcontrol.userOrder);
+routes.post('/auth/user/profile/:id/orders/createorder', middlewares.checkjwt, authcontrol.createOrders);
+routes.get('/auth/user/profile/:id/orders', middlewares.checkjwt, authcontrol.userOrder);
 // home page
 routes.get('/', authcontrol.homepage_get);
 
