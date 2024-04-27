@@ -1,5 +1,7 @@
 const { model } = require('mongoose');
 const dbcmd = require('../db/dbcmd');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 // const Productdb = require('../db/productdb');
 const productModle = require('../db/productSchema');
 const bcrypt = require('../db/bcrypt');
@@ -110,6 +112,7 @@ module.exports.getprofile = async (req, res) => {
     try {
         // Extracting ID from the path
         const id = req.path.split('/').pop();
+        console.log(id);
         const userdetails = await dbcmd.getuserdetails(id);
 
 
@@ -124,6 +127,10 @@ module.exports.getprofile = async (req, res) => {
         console.log(error);
         res.json({ message: error });
     }
+}
+module.exports.getRazerToken = async (req, res) => {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    res.json({ keyId });
 }
 module.exports.editProfile = async (req, res) => {
     // console.log(req)
@@ -237,10 +244,52 @@ module.exports.logout = (req, res) => {
     res.clearCookie("jwt").status(200).json({ message: "Successfully logged out" });
 }
 //orders
+module.exports.order = async (req, res) => {
+    const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    // setting up options for razorpay order.
+    const options = {
+        amount: Number(req.body.amount),
+        currency: "INR",
+        // receipt: req.body.receipt,
+        // payment_capture: 1
+    };
+    try {
+        const response = await razorpay.orders.create(options)
+        res.json({
+            order_id: response.id,
+            currency: response.currency,
+            amount: response.amount,
+        })
+    } catch (err) {
+        console.log(err);
+        res.status(400).send('Not able to create order. Please try again!');
+    }
+}
+module.exports.verifyPayment = async (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    let hmac = crypto.createHmac('sha256', key_secret);
+    hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+    const generated_signature = hmac.digest('hex');
+    if (razorpay_signature === generated_signature) {
+        // let checkOrderUpdate = await Order.findOneAndUpdate({ _id }, { razorpayPaymentId: razorpay_payment_id, razorpaySignature: razorpay_signature }, { new: true });
+        // console.log(checkOrderUpdate);
+        res.json({ "success": true, message: "Payment has been verified" })
+    }
+    else
+        res.json({ message: "Payment verification failed" })
+}
 module.exports.createOrders = async (req, res) => {
     const id = req.params.id;
     if (!id) return res.json({ message: "Authentication Failed" });
-
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    console.log(req.body);
+    // return;
     const data = req.body.data;
     console.log(id);
     console.log(data);
@@ -258,6 +307,7 @@ module.exports.createOrders = async (req, res) => {
             if (!product) {
                 return res.status(404).json({ message: `Product with ID ${element.id} not found` });
             }
+
             if (element.numberOfItems <= product.Stock) {
                 const order = new Order({
                     userId: id,
@@ -268,8 +318,11 @@ module.exports.createOrders = async (req, res) => {
                         image: product.img[0],
                         discount: element.discount,
                         address: element.address,
-                        total: (parseInt(element.numberOfItems) * parseInt(product.ProductPrice)) - parseInt(element.discount)
-                    }
+                        total: (parseInt(element.numberOfItems) * parseInt(product.ProductPrice)) - (parseInt(element.discount) || 0)
+                    },
+                    razorpay_order_id,
+                    razorpay_payment_id,
+                    razorpay_signature
                 });
                 await order.save();
                 user.orders.push(order._id);
@@ -297,14 +350,20 @@ module.exports.allorders = async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 6;
     let skip = (page - 1) * limit;
-    const Allorder = await Order.find().populate('userId').skip(skip).limit(limit).exec();
+    const { isOrderChangeView } = req.query;
+    console.log(isOrderChangeView)
+    const totalItems = await Order.find().countDocuments();
+    const lastPage = Math.ceil(totalItems / limit);
+    const Allorder = await Order.find({
+        orderStatus: isOrderChangeView
+    }).populate('userId').skip(skip).limit(limit).exec();
     Allorder.forEach((value) => {
         value.userId.password = undefined;
         value.userId.addresses = undefined;
         value.userId.orders = undefined;
         value.userId.email = undefined;
     })
-    res.json({ "order": Allorder });
+    res.json({ "order": Allorder, lastPage });
 }
 module.exports.userOrder = async (req, res) => {
     const id = req.params.id;
@@ -318,11 +377,9 @@ module.exports.userOrder = async (req, res) => {
 }
 module.exports.orderStatus = async (req, res) => {
     const data = req.body.data || [];
+    console.log(data);
     if (data.length <= 0) {
         return res.json({ "message": "Please provide data" });
-    }
-    if (data.orderStatus === 'Shipped') {
-        return res.json({ "message": "Product already Shipped" })
     }
     try {
         const updateStatus = async () => {
@@ -390,26 +447,77 @@ module.exports.allusers = async (req, res) => {
 }
 module.exports.deleteuser = async (req, res) => {
     try {
-        const id = req.params.id;
-        console.log(id);
-        const data = await User.deleteOne(
-            {
-                _id: id
-            }
-        )
-        if (data.deletedCount == 0) {
-            return res.json({ message: "User Does not exist" });
+        const userId = req.params.id;
+
+        // Find all products where the user's rating needs to be removed
+        const products = await productModle.find({ 'RatingMessage.userId': userId });
+
+        // Remove the user from the User model
+        const deletedUser = await User.findByIdAndDelete(userId);
+        if (!deletedUser) {
+            return res.json({ message: "User does not exist" });
         }
-        // console.log(data);
-        res.json({ success: "true", message: "User deleted Success" });
+        const updatePromises = products.map(async (product) => {
+
+            let totalRating = 0;
+            let count = 0;
+            product.RatingMessage.forEach((ratingMessage) => {
+                if (ratingMessage.userId.toString() !== userId) {
+                    totalRating += ratingMessage.Rating;
+                    count++;
+                }
+            });
+            const newRating = count > 0 ? totalRating / count : 0;
+
+            product.Rating = newRating;
+            product.RatingMessage = product.RatingMessage.filter((ratingMessage) => ratingMessage.userId.toString() !== userId);
+
+            return product.save();
+        });
+
+        await Promise.all(updatePromises);
+
+        res.json({ success: true, message: "User deleted successfully" });
     } catch (err) {
         console.log(err.message);
-        res.send({ message: "err" });
+        res.send({ message: "Error" });
     }
 }
-module.exports.dashboard = (req, res) => {
-    res.json({ message: "Admin true" });
-}
+
+module.exports.dashboard = async (req, res) => {
+    const details = {};
+    try {
+        details.productCount = await productModle.countDocuments();
+        details.userCount = await User.countDocuments();
+        details.orderCount = await Order.countDocuments();
+        const products = await productModle.find();
+        const amountEarned = await Order.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: "$items.total" }
+                }
+            }
+        ]);
+        details.amountEarned = amountEarned[0]?.totalAmount || 0;
+        let OutOfStock = 0;
+        let InStock = 0;
+        products.forEach((value) => {
+            if (value.Stock <= 0) {
+                OutOfStock++;
+            } else {
+                InStock++;
+            }
+        });
+        details.OutOfStock = OutOfStock;
+        details.InStock = InStock;
+        res.json(details);
+    } catch (error) {
+        console.log(error);
+        res.json({ message: "Error" });
+    }
+};
+
 module.exports.addProduct = async (req, res) => {
     const err = { ProductName: "", ProductPrice: "", Category: "", HighligthPoint: "" };
     try {
@@ -456,15 +564,16 @@ module.exports.addProduct = async (req, res) => {
 
 module.exports.updateproduct = async (req, res) => {
     const id = req.params.id;
+    console.log(JSON.parse(req.body.HighligthPoint))
     let updateFields = {
         ProductPrice: req.body?.ProductPrice,
         ProductName: req.body?.ProductName,
         Description: req.body?.Description,
         Stock: req.body?.Stock,
         Category: req.body?.Category,
-        HighligthPoint: req.body?.HighligthPoint
+        HighligthPoint: req.body?.HighligthPoint ? JSON.parse(req.body?.HighligthPoint) : ''
     };
-
+    // console.log(updateFields.HighligthPoint.split(','));
     if (req.img) {
         var imagePath = req.img.replace(/\\/g, '/')?.replace('uploads/', '');
         updateFields.img = imagePath;
@@ -483,20 +592,20 @@ module.exports.updateproduct = async (req, res) => {
 }
 module.exports.deleteprodcut = async (req, res) => {
     try {
-        const id = req.query.id;
+        const id = req.params.id;
         const data = await productModle.deleteOne(
             {
                 _id: id
             }
         )
         if (data.deletedCount == 0) {
-            return res.json({ success: "false", message: "Product Does not exist" });
+            return res.json({ message: "Product Does not exist" });
         }
         // console.log(data);
         res.json({ success: "true", message: "Product deleted Success" });
     } catch (err) {
         console.log(err.message);
-        res.send("err");
+        res.json({ message: "Error" });
     }
 
 }
@@ -518,6 +627,16 @@ module.exports.allproductList = async (req, res) => {
             { Category: { $regex: productname, $options: 'i' } },
             { Description: { $regex: productname, $options: 'i' } }
         ];
+        if (rating) {
+            query.Rating = { $gte: parseInt(rating) };
+        }
+        if (price) {
+            const [minPrice, maxPrice] = price.split('-').map(parseFloat);
+            query.ProductPrice = { $gte: minPrice, $lte: maxPrice };
+        }
+        if (category) {
+            query.Category = { $regex: category, $options: 'i' };
+        }
     } else {
         // If productname is not provided, apply other filters (if available)
         if (rating) {
@@ -604,13 +723,19 @@ module.exports.Oneproduct = async (req, res) => {
     try {
         const id = req.query.id;
         const data = await productModle.findById(id).populate('RatingMessage.userId').exec();
+        console.log(data);
+
         data.RatingMessage.forEach((value) => {
-            value.userId.password = undefined;
-            value.userId.addresses = undefined;
-            value.userId.orders = undefined;
-            value.userId.email = undefined;
-            value.userId.role = undefined;
+            if (value.userId) {
+                value.userId.password = undefined;
+                value.userId.addresses = undefined;
+                value.userId.orders = undefined;
+                value.userId.email = undefined;
+                value.userId.role = undefined;
+            }
+
         })
+
         let SuggestedProduct = JSON.parse(data.Category[0]);
         var SuggestedProductList = await productModle.find({});
         let temp = []

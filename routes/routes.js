@@ -18,9 +18,10 @@ routes.post('/auth/user/profile/:id/edit/profileimage', uploadUserProfile, middl
 routes.post('/auth/user/profile/:id/edit/profile/details', middlewares.checkjwt, authcontrol.updateUserDetails);
 routes.post('/auth/user/profile/:id/edit/profile/address', middlewares.checkjwt, authcontrol.updateOrDeleteAdress);
 routes.get('/auth/user/logout', middlewares.checkjwt, authcontrol.logout);
+routes.get('/auth/user/getrazerToken', middlewares.checkjwt, authcontrol.getRazerToken);
 
 // admin page
-routes.get('/auth/admin/Check', middlewares.AdminRoute, authcontrol.dashboard);
+routes.get('/auth/admin/dashboard', middlewares.AdminRoute, authcontrol.dashboard);
 routes.get('/auth/user/profile/:id', middlewares.AdminRoute, authcontrol.getprofile);
 routes.get('/auth/admin/allorders', authcontrol.allorders);
 routes.post('/auth/admin/allorders/status', middlewares.AdminRoute, authcontrol.orderStatus);
@@ -34,7 +35,8 @@ routes.delete('/auth/admin/deleteprodcut/:id', middlewares.AdminRoute, authcontr
 // routes.post('/auth/admin/fileupload', authcontrol.fileUpload);
 
 //getProduct
-
+routes.post('/order', authcontrol.order);
+routes.post('/verifyPayment', authcontrol.verifyPayment);
 routes.get('/productList', authcontrol.allproductList)
 routes.post('/product/review', middlewares.checkjwt, authcontrol.productupdate)
 routes.get('/product/:', authcontrol.Oneproduct);

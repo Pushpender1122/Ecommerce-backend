@@ -20,7 +20,7 @@ app.use(express.static('uploads'));
 app.use(flash());
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your frontend URL
+    origin: 'http://192.168.161.10:3000', // Replace with your frontend URL
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
 app.use(express.urlencoded({ extended: true }));
@@ -34,6 +34,6 @@ const PORT = process.env.PORT || 4500;
 
 app.use(route);
 
-app.listen(PORT, 'localhost', () => {
+app.listen(PORT, '192.168.161.10', () => {
     console.log(`Server running on PORT ${PORT}`);
 })

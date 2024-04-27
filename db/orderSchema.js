@@ -13,7 +13,11 @@ const orderSchema = new mongoose.Schema({
         discount: { type: Number, default: 0 },
         address: String,
         total: Number
-    }
+    },
+    razorpay_order_id: String,
+    razorpay_payment_id: String,
+    razorpay_signature: String
+
 })
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;
