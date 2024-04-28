@@ -31,7 +31,7 @@ module.exports.login_post = async (req, res) => {
                 maxAge: 1000 * 60 * 60 * 24 * 7,
                 httpOnly: true,
                 // domain: 'localhost', // Replace 'localhost' with your desired domain
-                secure: false,
+                secure: true,
                 sameSite: 'None', // Set to 'Strict', 'Lax', or 'None'
             });
 
