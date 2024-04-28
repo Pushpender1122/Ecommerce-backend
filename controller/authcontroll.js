@@ -28,7 +28,7 @@ module.exports.login_post = async (req, res) => {
             const token = await jwt.createjwt(email);
             const user = await dbcmd.getuserdetails(id);
             res.cookie('jwt', token, {
-                maxAge: 1000 * 60 * 60 * 24 * 7,
+                maxAge: 1000 * 60 * 60 * 24 * 31,
                 httpOnly: true,
                 // domain: 'localhost', // Replace 'localhost' with your desired domain
                 secure: true,
