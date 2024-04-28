@@ -587,14 +587,13 @@ module.exports.updateproduct = async (req, res) => {
     const id = req.params.id;
     var imgUrl = '';
     try {
-        if (!req.file) {
-            throw new Error('No file uploaded');
+        if (req.file) {
+            const response = await uploadToCloudinary(req.file.path, req.file.filename);
+            if (!response || !response.url) {
+                throw new Error('Failed to upload to Cloudinary');
+            }
+            imgUrl = response.url;
         }
-        const response = await uploadToCloudinary(req.file.path, req.file.filename);
-        if (!response || !response.url) {
-            throw new Error('Failed to upload to Cloudinary');
-        }
-        imgUrl = response.url;
     } catch (error) {
         // console.error('Error:', error);
         res.status(500).json({ message: error.message || 'Internal Server Error' });
