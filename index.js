@@ -13,6 +13,12 @@ app.use(session({
     secret: 'RandomTExtFOrHa23!@3',
     resave: false,
     saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Set to true in production
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 hour
+        sameSite: 'Strict' // Set SameSite attribute to 'Strict'
+    }
     // cookie: { secure: true } 
 }));
 app.use(cookieParser());
