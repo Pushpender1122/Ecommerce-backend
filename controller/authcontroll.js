@@ -32,7 +32,7 @@ module.exports.login_post = async (req, res) => {
                 httpOnly: true,
                 // domain: 'localhost', // Replace 'localhost' with your desired domain
                 secure: false,
-                sameSite: 'Strict', // Set to 'Strict', 'Lax', or 'None'
+                sameSite: 'Lax', // Set to 'Strict', 'Lax', or 'None'
             });
 
             // res.setHeader('Set-Cookie', cookie.serialize('jwt', String(jwt), {
