@@ -25,25 +25,12 @@ app.use(cookieParser());
 app.use(express.static('uploads'));
 app.use(flash());
 app.use(express.json());
-const allowedOrigins = ['https://quickcyberecom.netlify.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://quickcyberecom.netlify.app', 'http://localhost:3000']; // Replace with your desired origins
 
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true // Allow credentials (cookies, authorization headers, etc.)
 }));
-
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigins.join(','));
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    next();
-});
-
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({

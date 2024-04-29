@@ -5,7 +5,8 @@ const key = process.env.SECRETKEY;
 module.exports.createjwt = async (email) => {
     try {
         const user_id = await dbcmd.getId(email);
-        const token = jwt.sign({ user_id }, key, { expiresIn: '1h' }); // Signing the user_id payload
+        const expiresInDays = 31;
+        const token = jwt.sign({ user_id }, key, { expiresIn: `${expiresInDays}d` }); // Signing the user_id payload
 
         return token;
     } catch (err) {
