@@ -25,12 +25,21 @@ app.use(cookieParser());
 app.use(express.static('uploads'));
 app.use(flash());
 app.use(express.json());
+const allowedOrigins = ['https://quickcyberecom.netlify.app', 'http://localhost:3000'];
+
 app.use(cors({
-    origin: 'https://quickcyberecom.netlify.app', // Replace with your frontend URL
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
 }));
+
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://quickcyberecom.netlify.app');
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigins.join(','));
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     next();
 });
