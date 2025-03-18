@@ -16,6 +16,7 @@ module.exports.checkjwt = (req, res, next) => {
 module.exports.AdminRoute = async (req, res, next) => {
     const token = req.cookies.jwt;
     const data = jwt.verifytoken(token);
+    const method = req.method;
     if (!data?.success) {
         res.json({ message: "Authentication Failed" })
     }
@@ -23,7 +24,11 @@ module.exports.AdminRoute = async (req, res, next) => {
         // console.log(data);
         // res.send("Hlo");
         var Userdetails = await dbcmd.getuserdetails(data?.user?.user_id);
-        if (Userdetails.role === "Admin" || Userdetails.role === 'admin') {
+        if (Userdetails.role.toLowerCase() === 'visitor' && method === 'GET') {
+            next();
+            return
+        }
+        if (Userdetails.role.toLowerCase() === 'admin') {
             next();
         }
         else {

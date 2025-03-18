@@ -38,7 +38,7 @@ module.exports.NewUser = async (name, email, password) => {
             address: 'Shop No 1, Lala Compound, Mahakalicave Rd, Near Holy Street Hospital, Andheri (west)'
         };
         const hashPassword = await bcrypt.createHash(password);
-        const newUser = new User({ name, email, password: hashPassword, addresses: [newAddress] });
+        const newUser = new User({ name, email, password: hashPassword, addresses: [newAddress], role: email === 'visitor@gmail.com' ? 'visitor' : 'user' });
         await newUser.save();
         return newUser ? 1 : 0;
     } catch (err) {
