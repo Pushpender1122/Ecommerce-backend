@@ -251,10 +251,20 @@ module.exports.order = async (req, res) => {
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
-
+    const cartItem = req.body.cartItem;
+    let totalAmount = 30;
+    let cartItemDetails = await productModle.find({ _id: { $in: cartItem.map((item) => item.id) } });
+    cartItemDetails.forEach((value) => {
+        cartItem.forEach((element) => {
+            if (value._id == element.id) {
+                totalAmount += (parseInt(element.numberOfItems) * parseInt(value.ProductPrice) || 0);
+            }
+        });
+    });
+    totalAmount = (totalAmount * 100); // converting to paisa
     // setting up options for razorpay order.
     const options = {
-        amount: Number(req.body.amount),
+        amount: Number(totalAmount),
         currency: "INR",
         // receipt: req.body.receipt,
         // payment_capture: 1
